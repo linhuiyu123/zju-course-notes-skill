@@ -37,4 +37,3 @@ Prepare a separate, reviewable study package for each class meeting. The student
 ## Existing local tooling
 
 If the user's project already has a per-lesson packager (for example, `run.py chatpack --course ... --sub ...`), inspect its help and relevant code before using it. Confirm it reads cached/local materials and does not perform an unrequested download. Adapt or wrap it only when needed for the requested ZIP format; do not alter project code without a clear need. If no such tool exists, create the package from the files already available using standard local file and ZIP tools.
-

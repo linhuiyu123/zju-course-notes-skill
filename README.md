@@ -26,4 +26,3 @@ Restart Codex or start a new task, then ask for example: “Use the zju-course-n
 - Verifies the archive contents and reports missing or ambiguous materials.
 
 The skill does not include any student's account configuration, course roster, transcripts, notes, or downloaded materials. It does not automate ChatGPT submission or bypass course-platform download permissions.
-
