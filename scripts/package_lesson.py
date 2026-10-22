@@ -14,6 +14,7 @@ from pathlib import Path
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = SKILL_ROOT / "references" / "chatgpt-prompt-template.md"
+QUALITY_STANDARD = SKILL_ROOT / "references" / "note-quality-standard.md"
 VIDEO_SUFFIXES = {".3gp", ".avi", ".flv", ".m4v", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg", ".webm", ".wmv"}
 INSTALLER_SUFFIXES = {".apk", ".appx", ".deb", ".dmg", ".exe", ".msi", ".pkg", ".rpm"}
 SECRET_NAMES = {
@@ -52,7 +53,8 @@ def collect_files(root: Path) -> tuple[list[Path], list[tuple[Path, str]]]:
     return included, skipped
 
 
-def build_prompt(course: str, lesson_date: str, lesson: str, teacher: str, files: list[Path], root: Path) -> str:
+def build_prompt(course: str, lesson_date: str, lesson: str, teacher: str, files: list[Path], root: Path,
+                 include_reference_standard: bool) -> str:
     prompt = TEMPLATE.read_text(encoding="utf-8")
     teacher_line = f"- 教师：`{teacher}`\n" if teacher else ""
     material_names = "\n".join(f"  - `materials/{p.relative_to(root).as_posix()}`" for p in files)
@@ -61,7 +63,15 @@ def build_prompt(course: str, lesson_date: str, lesson: str, teacher: str, files
     prompt = prompt.replace("<课次或主题>", lesson)
     prompt = prompt.replace("- 教师：`<教师；未知则删除此行>`\n", teacher_line)
     prompt = prompt.replace("<逐项列出本次上传的文件名>", "\n" + material_names)
-    return prompt
+    if include_reference_standard:
+        standard_instruction = "我明确选择在本次任务中采用下方完整的个人规范，请按其要求整理。"
+    else:
+        standard_instruction = "请遵循本提示词和我另外提供的要求。仓库维护者的个人规范仅供参考，除非我明确指定，否则不要默认套用。"
+    prompt = prompt.replace("<规范选择说明>", standard_instruction)
+    if include_reference_standard:
+        standard = QUALITY_STANDARD.read_text(encoding="utf-8")
+        prompt = f"{prompt.rstrip()}\n\n---\n\n{standard.rstrip()}"
+    return prompt.rstrip() + "\n"
 
 
 def create_archive(args: argparse.Namespace) -> Path:
@@ -85,7 +95,8 @@ def create_archive(args: argparse.Namespace) -> Path:
     if archive.exists() and not args.overwrite:
         raise FileExistsError(f"Output already exists: {archive} (pass --overwrite to replace it)")
 
-    prompt = build_prompt(args.course, args.date, args.lesson, args.teacher or "", files, source)
+    prompt = build_prompt(args.course, args.date, args.lesson, args.teacher or "", files, source,
+                          args.include_reference_standard)
     expected = {"prompt.md", *(f"materials/{p.relative_to(source).as_posix()}" for p in files)}
     with tempfile.TemporaryDirectory(prefix="zju-course-notes-") as temp_name:
         temp_archive = Path(temp_name) / "package.zip"
@@ -122,6 +133,8 @@ def main() -> int:
     parser.add_argument("--teacher", help="Teacher name, if known")
     parser.add_argument("--materials-dir", required=True, help="Folder containing this lesson's local materials")
     parser.add_argument("--output-dir", default=".", help="Directory for the ZIP (default: current directory)")
+    parser.add_argument("--include-reference-standard", action="store_true",
+                        help="Append the repository maintainer's personal note standard as an optional reference")
     parser.add_argument("--overwrite", action="store_true", help="Replace an existing ZIP with the same name")
     args = parser.parse_args()
     try:
