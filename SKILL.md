@@ -37,3 +37,11 @@ Prepare a separate, reviewable study package for each class meeting. The student
 ## Existing local tooling
 
 If the user's project already has a per-lesson packager (for example, `run.py chatpack --course ... --sub ...`), inspect its help and relevant code before using it. Confirm it reads cached/local materials and does not perform an unrequested download. Adapt or wrap it only when needed for the requested ZIP format; do not alter project code without a clear need. If no such tool exists, create the package from the files already available using standard local file and ZIP tools.
+
+This skill includes `scripts/package_lesson.py` for the common local-files case. It reads one lesson folder, fills the prompt template, writes one ZIP, and checks the archive. Example:
+
+```bash
+python scripts/package_lesson.py --course "地理学导论" --date 2026-10-22 --lesson "第3-4节" --materials-dir "./course-materials/lesson-03" --output-dir "./lesson-packages"
+```
+
+The helper includes local PPT/PPTX/PDF, transcript, and other selected files regardless of PPT/PDF size. It skips video files, software installers, hidden/generated folders, and common credential files, and reports skipped files. Review the report and ZIP contents before sharing or uploading.
